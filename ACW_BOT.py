@@ -49,31 +49,68 @@ def upCommentToTeams(content):
     myTeamsMessage.send()
 
 
+def makeClearCopy(contents):
+    contents = contents.replace("どうですか","どうですか？\n")
+    contents = contents.replace("ごめん","ごめん、")
+    contents = contents.replace("じゃん","じゃん？\n")
+    contents = contents.replace("ですが","ですが、")
+    contents = contents.replace("からね","からね。\n")
+    contents = contents.replace("ました","ました。\n")
+    contents = contents.replace("じゃあ","じゃあ、")
+    contents = contents.replace("例えば","例えば、")
+    contents = contents.replace("だね","だね。\n")
+    contents = contents.replace("んで","んで、")
+    contents = contents.replace("です","です。\n")
+    contents = contents.replace("すね","すね。\n")
+    contents = contents.replace("たい","たい。\n")
+    contents = contents.replace("よね","よね。\n")
+    contents = contents.replace("ます","ます。\n")
+    contents = contents.replace("かな","かな？\n")
+    contents = contents.replace("さい","さい。\n")
+    contents = contents.replace("けど","けど、")
+    contents = contents.replace("うね","うね。\n")
+    contents = contents.replace("だよ","だよ。\n")
+    contents = contents.replace("すか","すか？\n")
+    contents = contents.replace("ので","ので、")
+    contents = contents.replace("いね","いね。\n")
+
+    return contents
+
+
 def main():
     creds = getCredential()
     service = build('docs', 'v1', credentials=creds)
+
+        sleep(10)
 
     while True:
         # Retrieve the documents contents from the Docs service.
         document = service.documents().get(documentId=DOCUMENT_ID).execute()
 
-        # 本文の取得。表示。
+        # 本文の取得。
         contents = format(document.get('body').get('content')[1].get('paragraph').get('elements')[0].get('textRun').get('content'))
-        print("投稿しました。")
-        print('The content of the document is:', contents)
+        if len(contents) == 2: #空の場合60秒待機
+            sleep(60)
+            continue
+        # 清書
+        fairCopy = makeClearCopy(contents)
 
         # 投稿
-        upCommentToTeams(contents)
+        upCommentToTeams(fairCopy)
 
         # 本文削除のレンジを決める(最初から最後まで)
         endChar = len(contents)
         requests = [{'deleteContentRange': {'range': {'startIndex': 1,'endIndex': endChar,}}},]
-
         # ドキュメント内本文削除
         service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requests}).execute()
 
+        # 本文に追加する文字設定
+        requests = [{'insertText': {'location': {'index': 1,},'text': " "}}]
+        # 本文に文字追加
+        service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requests}).execute()
+
         # 投稿の時間間隔指定
-        sleep(15)
+        sleep(60)
 
 
 if __name__ == '__main__':
