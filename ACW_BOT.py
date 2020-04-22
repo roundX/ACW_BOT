@@ -61,10 +61,10 @@ def makeClearCopy(contents):
     contents = contents.replace("だね","だね。\n")
     contents = contents.replace("んで","んで、")
     contents = contents.replace("です","です。\n")
+    contents = contents.replace("ます","ます。\n")
     contents = contents.replace("すね","すね。\n")
     contents = contents.replace("たい","たい。\n")
     contents = contents.replace("よね","よね。\n")
-    contents = contents.replace("ます","ます。\n")
     contents = contents.replace("かな","かな？\n")
     contents = contents.replace("さい","さい。\n")
     contents = contents.replace("けど","けど、")
@@ -72,25 +72,29 @@ def makeClearCopy(contents):
     contents = contents.replace("だよ","だよ。\n")
     contents = contents.replace("すか","すか？\n")
     contents = contents.replace("ので","ので、")
+    contents = contents.replace("とか","とか、")
     contents = contents.replace("いね","いね。\n")
     contents = contents.replace("うか","うか。\n")
     contents = contents.replace("はい","はい。\n")
     contents = contents.replace("つって","つって、")
-    contents = contents.replace("です。ね","ですね。\n")
-    contents = contents.replace("だよ。ね。","だよね。\n")
+    contents = contents.replace("です。\nね","ですね。\n")
+    contents = contents.replace("だよ。\nね。","だよね。\n")
     contents = contents.replace("いうと","いうと、")
-    contents = contents.replace("ません","ません。")
     contents = contents.replace("ません","ません。\n")
-    contents = contents.replace("です。かね","ですかね。\n")
+    contents = contents.replace("です。\nかね","ですかね。\n")
     contents = contents.replace("あれか","あれか、")
     contents = contents.replace("いいや","いいや。\n")
-    contents = contents.replace("です。か","ですか？\n")
-    contents = contents.replace("ます。ね。","ますね。\n")
-    contents = contents.replace("みたい。やね","みたいやね。\n")
-    contents = contents.replace("ます。か","ますか？\n")
-    contents = contents.replace("やります。んで、","やりますんで、")
-    contents = contents.replace("たい。んで、","たいんで、")
+    contents = contents.replace("です。\nか","ですか？\n")
+    contents = contents.replace("です。\nね","ですね。\n")
+    contents = contents.replace("です。\nが","ですが")
+    contents = contents.replace("ます。\nね","ますね。\n")
+    contents = contents.replace("みたい。\nやね","みたいやね。\n")
+    contents = contents.replace("ます。\nか","ますか？\n")
+    contents = contents.replace("やります。\nんで、","やりますんで、")
+    contents = contents.replace("たい。\nんで、","たいんで、")
     contents = contents.replace("んで、すが、","んですが、")
+    contents = contents.replace("んで、すけど、","んですけど、")
+    contents = contents.replace("たい、ので、","たいので、")
 
     return contents
 
@@ -99,7 +103,9 @@ def main():
     creds = getCredential()
     service = build('docs', 'v1', credentials=creds)
 
-        sleep(10)
+    # 空文字追加
+    requestsAddSpace = [{'insertText': {'location': {'index': 1,},'text': " "}}]
+    service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requestsAddSpace}).execute()
 
     while True:
         # Retrieve the documents contents from the Docs service.
@@ -118,14 +124,10 @@ def main():
 
         # 本文削除のレンジを決める(最初から最後まで)
         endChar = len(contents)
-        requests = [{'deleteContentRange': {'range': {'startIndex': 1,'endIndex': endChar,}}},]
-        # ドキュメント内本文削除
-        service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requests}).execute()
-
-        # 本文に追加する文字設定
-        requests = [{'insertText': {'location': {'index': 1,},'text': " "}}]
-        # 本文に文字追加
-        service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requests}).execute()
+        requestsDelete = [{'deleteContentRange': {'range': {'startIndex': 1,'endIndex': endChar,}}},]
+        # ドキュメント内本文削除、空文字追加
+        service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requestsDelete}).execute()
+        service.documents().batchUpdate(documentId=DOCUMENT_ID, body={'requests': requestsAddSpace}).execute()
 
         # 投稿の時間間隔指定
         sleep(60)
